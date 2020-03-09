@@ -1,0 +1,76 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<title>Chat</title>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+<script src="chat_config.js"></script>
+<style>
+#chatWindow {
+    width: 500px;
+    height:50%;
+    border: 1px solid black;
+    background-color: white;
+    overflow-y:auto;
+}
+#chatControls {
+    margin-top: 5px;
+    width: 500px;
+    height: 35px;
+    border: 1px solid black;
+    text-align:center;	
+}
+.inner {   
+    margin-top: 5px;
+}
+</style>
+</head>
+<body>
+<div id="chat">
+<div id="chatWindow"></div>
+<div id="chatControls">
+<div>
+<input  type="text" id="name" placeholder="anonymous" class="inner"/>:
+<input id="chatMsg" type="text" placeholder="your message" class="inner"/>
+<button id="sendChat" class="inner">Chat It!</button>
+</div>
+</div>
+</div>
+</body>
+
+<script>
+    
+    var ws = new WebSocket("ws://" + host + ":" + port + "/");
+    $( "#sendChat" ).click(function() {
+        var name = $("#name");
+        var chatMsg = $("#chatMsg");
+        name = name.val() ? name.val() : "anonymous";
+        chatMsg = chatMsg.val() ? chatMsg.val() : "your message";
+        
+        var message = ["msg", name, chatMsg];
+        message = JSON.stringify(message);  //To solve the issue with inability to use : in user name
+        try {            
+            ws.send( message );           
+        } catch (error) {
+            console.log (error);
+        }
+    });
+    ws.onmessage = function( event ) {
+        var message = event.data;
+        chatWindow = $("#chatWindow");
+        $("#chatWindow").append( message + '<br/>' );
+        $("#chatWindow").scrollTop( $("#chatWindow").prop( 'scrollHeight' ) );
+    };
+    
+    setTimeout(updateHistory, 1000); //To get history on page reload - that is not a polling - the event will not repeat - it is just a delay after page re-load or re-fresh and firing an event
+    function updateHistory() {
+        var message = ["srv", "get", "history"]; 
+        message = JSON.stringify(message); //To solve the issue with inability to use : in user name
+        try {            
+            ws.send( message );           
+        } catch (error) {
+            console.log (error);
+        }
+    }
+</script>
+</html>
+
